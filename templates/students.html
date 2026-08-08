@@ -1,0 +1,132 @@
+{% extends "admin/base.html" %}
+
+{% block content %}
+<div class="jumbotron">
+	<div class="container">
+		<h1>Students</h1>
+	</div>
+</div>
+
+<div class="container">
+
+	{% if import_result %}
+	<div class="row">
+		<div class="col-md-12">
+			{% if import_result.errors %}
+				{% for error in import_result.errors %}
+				<div class="alert alert-danger">{{ error }}</div>
+				{% endfor %}
+			{% endif %}
+			{% if import_result.created or import_result.updated or import_result.not_found %}
+			<div class="alert alert-info">
+				Import finished: {{ import_result.created }} created, {{ import_result.updated }} updated.
+				{% if import_result.not_found %}
+				<br>
+				No matching account for: {{ import_result.not_found | join(", ") }}
+				{% endif %}
+			</div>
+			{% endif %}
+		</div>
+	</div>
+	{% endif %}
+
+	<div class="row">
+		<div class="col-md-12">
+			<form method="GET" class="form-inline">
+				<div class="form-group col-md-10">
+					<input type="text" name="q" class="form-control w-100" placeholder="Search by name, email, school, or class" value="{{ q or '' }}">
+				</div>
+				<div class="form-group col-md-2">
+					<button type="submit" class="btn btn-primary w-100">
+						<i class="fas fa-search" aria-hidden="true"></i> Search
+					</button>
+				</div>
+			</form>
+		</div>
+	</div>
+
+	<hr>
+
+	<div class="row">
+		<div class="col-md-12">
+			<div class="card mb-3">
+				<div class="card-header">Bulk import from CSV</div>
+				<div class="card-body">
+					<form method="POST" action="{{ url_for('enhanced_for_educate.students_import') }}" enctype="multipart/form-data" class="form-inline">
+						<input type="hidden" name="nonce" value="{{ Session.nonce }}">
+						<div class="form-group col-md-6">
+							<input type="file" name="csv_file" accept=".csv" class="form-control-file" required>
+						</div>
+						<div class="form-group col-md-3">
+							<button type="submit" class="btn btn-primary">Import</button>
+						</div>
+					</form>
+					<small class="text-muted">
+						CSV columns: <code>email</code> (required, must match an existing account), <code>school</code>, <code>class</code>.
+						<a href="{{ url_for('enhanced_for_educate.students_csv_template') }}">Download template</a>
+						&middot;
+						<a href="{{ url_for('enhanced_for_educate.students_export') }}">Export current data</a>
+					</small>
+				</div>
+			</div>
+		</div>
+	</div>
+
+	<div class="row">
+		<div class="col-md-12 table-responsive">
+			<table class="table table-striped border">
+				<thead>
+					<tr>
+						<th class="text-center"><b>ID</b></th>
+						<th class="text-center"><b>Name</b></th>
+						<th class="text-center"><b>Email</b></th>
+						<th class="text-center"><b>School</b></th>
+						<th class="text-center"><b>Class</b></th>
+						<th class="text-center"><b>&nbsp;</b></th>
+					</tr>
+				</thead>
+				<tbody>
+					{% for user in users %}
+					{% set info = infos.get(user.id) %}
+					<tr>
+						<td class="text-center">{{ user.id }}</td>
+						<td class="text-center">
+							<a href="{{ url_for('admin.users_detail', user_id=user.id) }}">{{ user.name | truncate(32) }}</a>
+						</td>
+						<td class="text-center">{{ user.email }}</td>
+						<td colspan="3">
+							<form method="POST" action="{{ url_for('enhanced_for_educate.students_update', user_id=user.id) }}" class="form-inline justify-content-center">
+								<input type="hidden" name="nonce" value="{{ Session.nonce }}">
+								<input type="hidden" name="q" value="{{ q or '' }}">
+								<input type="hidden" name="page" value="{{ pagination.page }}">
+								<div class="form-group col-md-4">
+									<input type="text" name="school" class="form-control w-100" placeholder="School" value="{{ info.school if info else '' }}">
+								</div>
+								<div class="form-group col-md-4">
+									<input type="text" name="student_class" class="form-control w-100" placeholder="Class" value="{{ info.student_class if info else '' }}">
+								</div>
+								<div class="form-group col-md-2">
+									<button type="submit" class="btn btn-sm btn-outline-primary w-100">Save</button>
+								</div>
+							</form>
+						</td>
+					</tr>
+					{% endfor %}
+				</tbody>
+			</table>
+			{% if pagination.pages > 1 %}
+			<div class="text-center">
+				Page {{ pagination.page }} of {{ pagination.pages }}
+				<br>
+				{% if prev_page %}
+				<a href="{{ prev_page }}">&lt;&lt;&lt;</a>
+				{% endif %}
+				{% if next_page %}
+				<a href="{{ next_page }}">&gt;&gt;&gt;</a>
+				{% endif %}
+			</div>
+			{% endif %}
+		</div>
+	</div>
+</div>
+{% endblock %}
