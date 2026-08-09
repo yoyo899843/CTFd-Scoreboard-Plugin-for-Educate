@@ -16,4 +16,11 @@ You can import lists from csv, there is a download template.
 
 ## How to Install
 
-Uncompress the zip to ```ur_CTFd_dir/CTFd/plugins/```
+In the CTFd dir
+
+```
+cd CTFd/plugins/
+git clone https://github.com/yoyo899843/CTFd-Scoreboard-Plugin-for-Educate.git
+cd ../../
+sudo docker compose up --build -d
+```

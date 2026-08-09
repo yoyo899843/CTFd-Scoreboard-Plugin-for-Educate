@@ -22,6 +22,12 @@ from CTFd.utils.scores import get_standings
 
 PER_PAGE = 50
 
+# The actual folder name this plugin is installed under (e.g. CTFd/plugins/<PLUGIN_NAME>)
+# can vary depending on how it was downloaded/unzipped, so it's derived at runtime
+# instead of being hardcoded, and used anywhere CTFd needs the on-disk plugin path
+# (templates, assets, migrations).
+PLUGIN_NAME = os.path.basename(os.path.dirname(os.path.abspath(__file__)))
+
 
 class StudentInfo(db.Model):
     __tablename__ = "enhanced_for_educate_students"
@@ -84,7 +90,7 @@ def _render_students_listing(import_result=None):
     )
 
     return render_template(
-        "plugins/enhanced_for_educate/templates/students.html",
+        "plugins/{}/templates/students.html".format(PLUGIN_NAME),
         users=pagination.items,
         infos=infos,
         pagination=pagination,
@@ -252,15 +258,21 @@ def scoreboard_data():
 
 
 def load(app):
-    upgrade(plugin_name="enhanced_for_educate")
+    upgrade(plugin_name=PLUGIN_NAME)
 
     app.register_blueprint(enhanced_for_educate)
 
     register_plugin_assets_directory(
-        app, base_path="/plugins/enhanced_for_educate/assets/"
+        app, base_path="/plugins/{}/assets/".format(PLUGIN_NAME)
     )
     register_admin_plugin_menu_bar(
         title="Students", route="/admin/enhanced_for_educate/students"
+    )
+
+    # The assets endpoint name registered above is derived from PLUGIN_NAME, so it's
+    # exposed to Jinja for scoreboard_override.html to look up instead of hardcoding it.
+    app.jinja_env.globals["efe_assets_endpoint"] = "plugins.{}.assets".format(
+        PLUGIN_NAME
     )
 
     template_path = os.path.join(
