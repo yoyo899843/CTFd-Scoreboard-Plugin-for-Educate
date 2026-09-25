@@ -50,6 +50,17 @@
     select.innerHTML = options.join("");
   }
 
+  // Only offer the classes that belong to the currently selected school.
+  function populateClassFilter() {
+    var school = schoolSelect.value;
+    var classes = uniqueSorted(
+      standings
+        .filter(function (r) { return !school || r.school === school; })
+        .map(function (r) { return r.student_class; }),
+    );
+    populateFilter(classSelect, classes, classSelect.value);
+  }
+
   function render() {
     var school = schoolSelect.value;
     var studentClass = classSelect.value;
@@ -110,25 +121,21 @@
         }
         standings = json.data;
 
-        var previousSchool = schoolSelect.value;
-        var previousClass = classSelect.value;
-
         populateFilter(
           schoolSelect,
           uniqueSorted(standings.map(function (r) { return r.school; })),
-          previousSchool,
+          schoolSelect.value,
         );
-        populateFilter(
-          classSelect,
-          uniqueSorted(standings.map(function (r) { return r.student_class; })),
-          previousClass,
-        );
+        populateClassFilter();
 
         render();
       });
   }
 
-  schoolSelect.addEventListener("change", render);
+  schoolSelect.addEventListener("change", function () {
+    populateClassFilter();
+    render();
+  });
   classSelect.addEventListener("change", render);
 
   update();
